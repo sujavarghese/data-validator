@@ -1,0 +1,1 @@
+Simple library that validates the file and its contents.
