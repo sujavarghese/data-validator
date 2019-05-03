@@ -1,6 +1,4 @@
 from collections import defaultdict
-from file_validator.reader.messages import *
-from file_validator.validator.messages import *
 
 
 class Base(object):
@@ -37,6 +35,8 @@ class MessageMapping:
     message_code_mapping = defaultdict()
 
     def map(self):
+        from file_validator.reader.messages import ReaderMessages
+        from file_validator.validator.messages import ValidatorMessages
         self.message_code_mapping.update({
             MessageCodes.CDP_001: ReaderMessages.FILE_EXISTS_VALIDATION_PASSED,
             MessageCodes.CDP_002: ReaderMessages.FILE_EXISTS_VALIDATION_FAILED,

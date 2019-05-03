@@ -1,0 +1,115 @@
+{
+  "fields": [
+    "test_column_1",
+    "test_column_2"
+  ],
+  "unique": ["test_column_1"],
+  "validations": {
+    "file_name": {
+      "tags": ["File Structure", "Naming"],
+      "fields": ["FILE"],
+      "constraint": ["^tbl_account_golden_gate_[\\d]{14}.csv$"],
+      "pre-validation": [],
+      "message": "File {} doesn't follow naming format."
+    },
+    "file_type": {
+      "tags": ["File Structure", "Extension"],
+      "fields": ["FILE"],
+      "constraint": ["csv"],
+      "message": "File {} is not an accepted file type. Accepted file types are {}"
+    },
+    "check_column_headers": {
+      "tags": ["File Structure", "Column"],
+      "fields": ["FILE"],
+      "constraint": ["test_column_1", "test_column_2"],
+      "message": "File {} is not an accepted file type. Accepted file types are {}"
+    },
+    "check_string": {
+      "tags": ["Attribute", "String"],
+      "fields": ["test_column_1"],
+      "constraint": [],
+      "message": "'{}' is not string value"
+    },
+    "check_date": {
+      "tags": ["Attribute", "Date"],
+      "fields": ["test_column_2"],
+      "message": "'{}' is not date value"
+    },
+    "required": {
+      "tags": ["Attribute", "Data", "Required"],
+      "fields": ["test_column_1", "test_column_2"],
+      "message": "'{}' has to have valid value"
+    },
+    "attribute_length": {
+      "tags": ["Attribute", "Length"],
+      "allow_multiple_config": "true",
+      "configs" : [
+        {
+          "fields": ["test_column_1"],
+          "constraint": [0, 12]
+        },
+        {
+          "fields": ["test_column_2"],
+          "constraint": [0, 10]
+        }
+      ],
+      "message": "{} can contain value between {} char long. {} is above the limit"
+    },
+    "match_regex": {
+      "tags": ["Attribute", "Regular Expression"],
+      "allow_multiple_config": "true",
+      "configs" : [
+        {
+          "fields": ["test_column_1"],
+          "constraint": ["^[a-z]$"]
+        },
+        {
+          "fields": ["test_column_2"],
+          "constraint": ["^[a-zA-Z]$"]
+        }
+      ],
+      "message": "'{}' does not match regex '{}'."
+    },
+    "match_enum": {
+      "tags": ["Attribute", "Enumeration"],
+      "allow_multiple_config": "true",
+      "configs" : [
+        {
+          "fields": ["test_column_1"],
+          "constraint": ["TEST1", "TEST2"],
+          "pre-validation": ["upper_case"]
+        },
+        {
+          "fields": ["test_column_2"],
+          "constraint": ["m", "f"],
+          "pre-validation": ["lower_case"]
+        }
+      ],
+      "message": "'{}' is not part of enum list {}."
+    },
+    "match_date_format": {
+      "tags": ["Attribute", "Date Format"],
+      "allow_multiple_config": "true",
+      "configs" : [
+        {
+          "fields": ["test_column_1"]
+        },
+        {
+          "fields": ["test_column_2"],
+          "constraint": ["YYYY-MM-DD"]
+        }
+      ],
+      "message": "'{}' does not follow date format {}."
+    },
+    "check_alphanumeric": {
+      "tags": ["Attribute", "Alpha Numeric"],
+      "fields": ["test_column_1"],
+      "message": "'{}' is not alphanumeric."
+    },
+    "check_not_null": {
+      "tags": ["Attribute", "Not NULL"],
+      "fields": ["test_column_1", "test_column_2"],
+      "message": "'{}' should not be null."
+    }
+  }
+}

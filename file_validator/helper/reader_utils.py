@@ -1,11 +1,9 @@
 import re
 import math
-import logging
 import traceback
 from datetime import datetime
 import numpy as np
-
-logger = logging.getLogger()
+import json
 
 FLOAT_RE = re.compile('^[-+]?[0-9]*\.?[0-9]+$')
 FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
@@ -37,7 +35,6 @@ def to_int(val, default=None):
         if FLOAT_RE.match(val):
             int_val = int(float(val))
     except TypeError as e:
-        # logger.warning(e)
         pass
 
     return int_val
@@ -57,8 +54,6 @@ def to_str(val, default=None):
         if not is_empty(val):
             str_val = str(val)
     except Exception as e:
-        # logger.warning(e)
-        # traceback.print_exc()
         pass
 
     return str_val
@@ -78,8 +73,6 @@ def to_float(val, default=None):
         if not is_empty(val):
             float_val = float(val)
     except Exception as e:
-        # logger.warning(e)
-        # traceback.print_exc()
         pass
     return float_val
 
@@ -99,8 +92,6 @@ def dollar_str_to_float(val, default=None):
         traceback.print_exc()
         float_val = float(val)
     except Exception as e:
-        # logger.warning(e)
-        # traceback.print_exc()
         float_val = None
 
     return float_val
@@ -128,7 +119,6 @@ def ts_unix_to_iso(ts, default=None):
             int_ts = int(ts)
             iso_ts = datetime.utcfromtimestamp(int_ts).isoformat()
         except Exception as e:
-            # logger.warning(e)
             pass
 
     return iso_ts
@@ -148,7 +138,6 @@ def round_down(val):
             float_val = float(val)
             floor_val = math.floor(float_val)
     except Exception as e:
-        # logger.warning(e)
         pass
 
     return floor_val
@@ -173,7 +162,6 @@ def concat(values, sep=', '):
     try:
         concat_str = sep.join([str(v) for v in values if not is_empty(v)])
     except Exception as e:
-        logger.warning(e)
         pass
     return concat_str
 
@@ -197,7 +185,6 @@ def normalise(str_val, casing='lower'):
         else:
             norm_val = clean_val
     except Exception as e:
-        # logger.warning(e)
         pass
     return norm_val
 
@@ -226,5 +213,16 @@ def clean_column_names(df):
     Renamed dataframe with clean column names
     """
 
-    clean_names = {n: clean(n) for n in df.columns}
+    clean_names = {n: clean(n) for n in df.fields}
     return df.rename(columns=clean_names)
+
+
+def read_json(config):
+    try:
+        return json.loads(config)
+    except:
+        try:
+            with open(config) as json_schema_file:
+                return json.load(json_schema_file)
+        except:
+            return {'invalid': True}

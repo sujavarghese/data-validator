@@ -25,5 +25,8 @@ setup(
         'pandas==0.23.4',
         'csvvalidator==1.2',
         'xmlschema==1.0.7',
+        'sqlalchemy==1.1.14',
+        "openpyxl==2.6.2",
+        "pdfkit==0.6.1",
     ],
 )

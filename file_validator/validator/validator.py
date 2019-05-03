@@ -1,144 +1,154 @@
-import logging
-import traceback
 import pandas as pd
-from pandas.io.parsers import TextFileReader
-from file_validator.helper import reader_utils
-from file_validator.validator.messages import ValidatorMessages as Messages, ValidatorPrefixes as Prefixes
-from file_validator.validation_logger import Log, ValidatorLogMixin
+import logging
+from file_validator.validator.utils import *
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
-class HeaderValidatorMixin:
-    log_prefix = Prefixes.HEADER_VALIDATOR_PREFIX
+class Base(object):
+    def __init__(self, logs):
+        self._status = True
+        self.log = logs
 
-    def verify_headers(self, df, file_path, file_type, **kwargs):
-        verified = True
-        msg = Messages.HEADER_VALIDATION_PASSED.format(file_path)
+    def __call__(self, *args, **kwargs):
+        return self._run(*args, **kwargs)
 
-        try:
-            if isinstance(df, TextFileReader):
-                logger.info('Reading in chunks...')
-                for idx, tfr in enumerate(df):
-                    logger.info('chunk: {}'.format(idx))
-                    verified, msg = self._verify_headers(tfr, file_path, file_type, **kwargs)
-                    if not verified:
-                        break
-            else:
-                logger.info('Reading everything...')
-                verified, msg = self._verify_headers(df, file_path, file_type, **kwargs)
+    def _run(self, *args, **kwargs):
+        df = args[0]
+        schema = args[1]
+        df, schema = self.pre_validate(df, schema, **kwargs)
+        df, schema = self._validate(df, schema, **kwargs)
+        return self.post_validate(df, schema, **kwargs)
 
-        except Exception as e:
-            traceback.print_exc()
-            verified = False
-            msg = Messages.HEADER_VALIDATION_FAILED.format(file_path)
+    def pre_validate(self, df, schema, **kwargs):
+        """
+        Perform actions on DF, prior to validation. Could include data clean up etc.
+        :param df:
+        :param schema:
+        :param kwargs:
+        :return:
+        """
+        raise NotImplementedError()
 
-        logger.info(msg)
-        self._log.make_record(name=file_path, msg=msg, status=verified)
+    def post_validate(self, df, schema, **kwargs):
+        """
+        Perform action on DF, post validation. Could include logging etc.
+        :param df:
+        :param schema:
+        :param kwargs:
+        :return:
+        """
+        raise NotImplementedError()
 
-        return verified, msg
-
-    def _verify_headers(self, df, file_path, file_type, **kwargs):
-        logger.info('{}: {}'.format(self.log_prefix, file_path))
-
-        verified = True
-        msg = Messages.HEADER_VALIDATION_PASSED.format(file_path)
-
-        data_schema = kwargs.get('schema')
-        if not data_schema:
-            verified = False
-            msg = Messages.HEADER_VALIDATION_FAILED_WITH_NO_FILE
-            return verified, msg
-
-        # TODO: implement schema factory and add method to fetch columns. accept option 'required=true'
-        required_columns = data_schema(file_type).columns(required=True)
-
-        if not required_columns:
-            return verified, msg
-
-        columns = list(df.columns.values)
-
-        if sorted(columns) == sorted(required_columns):
-            return verified, msg
-
-        missing_columns = set(required_columns).difference(set(columns))
-        if len(missing_columns) == 0:
-            return verified, msg
-
-        verified = False
-        msg = Messages.HEADER_VALIDATION_FAILED_WITH_MISSING_COLUMN.format(missing_columns)
-
-        return verified, msg
+    def _validate(self, df, schema, **kwargs):
+        """
+        Perform validation here
+        :param df:
+        :param schema:
+        :param kwargs:
+        :return:
+        """
+        raise NotImplementedError()
 
 
-class DataFrameValidationMixin:
-    log_prefix = Prefixes.COLUMN_VALIDATOR_PREFIX
+class FileValidator(Base):
+    pass
 
-    def execute(self, func, row):
-        try:
-            result = func(row)
-        except Exception:
-            result = None
 
-        if result:
-            return True
-        return False
+class AttributeValidator(Base):
+    pass
 
-    def verify_dataframe_values(self, df, file_type, **kwargs):
-        data_schema = kwargs.get('schema')(file_type)
-        should_store_pass = kwargs.get("should_store_pass", False)
-        schema_fields = data_schema.columns(required=True)
+
+class Validator(AttributeValidator, FileValidator):
+    def post_validate(self, df, schema, **kwargs):
+        return schema, self.log
+
+    def pre_validate(self, df, schema, **kwargs):
+        return df, schema
+
+    def _validate(self, df, schema, **kwargs):
+        """
+        Run validations one by one. Iterate through the list of validations and apply
+        1. pre validation rules 2. constraint 3. validation rule
+        Get the failed as well as passed objects and process them.
+        :param df:
+        :param schema:
+        :param kwargs:
+        :return:
+        """
+        schema_fields = schema.fields()
 
         ignored_columns = [col for col in df.columns if col not in schema_fields]
         logger.info('Source columns {} will be ignored.'.format(ignored_columns))
 
-        for field, (func, custom) in data_schema.validations():
+        for rule in schema.validations():
+            logger.info("Starting Rule {}" .format(rule.name()))
+            result_df = self._validate_rule(
+                self.apply_pre_validation_correction(df, rule, **kwargs), rule, **kwargs)
+            self._post_validate_rule(result_df, df, rule, **kwargs)
+            logger.info("Ending Rule {}".format(rule.name()))
 
-            logger.info("{} for field {}, with method '{}'".format(self.log_prefix, field, func))
+        return df, schema
 
-            if not custom:
-                result_df = df[field].apply(lambda row: self.execute(func, row), axis=1)
+    def apply_pre_validation_correction(self, df, rule, **kwargs):
+        """
+        Execute the pre validation rules. This could be clean up or
+        :param df:
+        :param rule:
+        :param kwargs:
+        :return:
+        """
+        pre_validation = rule.pre_validation
+        if not pre_validation:
+            self.log.record(rule.name(), "No pre validation applied.".format(rule.attribute), True)
+            return df
+
+        if isinstance(pre_validation, str):
+            pre_validation = [pre_validation]
+
+        for action in pre_validation:
+            global_func = globals().get(action, None)
+            if global_func:
+                df[rule.attribute] = df[rule.attribute].apply(lambda x: global_func(x))
             else:
-                result_df = df.apply(lambda row: self.execute(func, row), axis=1)
+                df[rule.attribute] = df[rule.attribute].apply(action)
 
-            combined = pd.concat([df[field], result_df])
+        self.log.record(rule.name(), "Pre validation applied on {} successfully.".format(rule.attribute), True)
+        return df
 
-            for row in combined.itertuples():
-                index = row[0]
-                value = row[1]
-                is_valid = row[2]
-                if is_valid:
-                    msg = Messages.COLUMNS_VALIDATION_PASSED
-                else:
-                    msg = Messages.COLUMNS_VALIDATION_FAILED
+    def apply_constraints(self, df, rule, **kwargs):
+        """
+        :param df:
+        :param rule:
+        :param kwargs:
+        :return:
+        """
+        constraint = rule.constraint
+        if not (constraint and isinstance(constraint, list)):
+            self.log.record(rule.name(), "No constraint applied.", True)
 
-                msg = msg.format(field, func, value)
+        return df
 
-                if (is_valid and should_store_pass) or not is_valid:
-                    logger.info(msg)
-                    self._log.make_record(name=field, msg=msg, status=is_valid)
+    def _validate_rule(self, df, rule, **kwargs):
+        """
+        :param df:
+        :param rule:
+        :param kwargs:
+        :return:
+        """
+        df = self.apply_constraints(df, rule, **kwargs)
+        if rule.is_file_rule:
+            result_df = pd.DataFrame({rule.name(): rule.execute(df, **kwargs)}, index=[rule.name()])
+        else:
+            result_df = pd.DataFrame(df[rule.attribute].apply(rule.execute, **kwargs))
+        result_df = result_df.rename(columns={result_df.columns[0]: rule.name()})
 
-        logger.info("{} ended".format(self.log_prefix))
+        self.log.record(rule.name(), "Validated field {}.".format(rule.attribute), all(result_df[rule.name()]))
+        return result_df
 
+    def _post_validate_rule(self, result_df, df, rule, **kwargs):
+        if not rule.is_file_rule:
+            result_df = pd.concat([df[rule.unique_key[0]], df[rule.attribute], result_df], axis=1)
 
-class Validator(HeaderValidatorMixin, DataFrameValidationMixin, ValidatorLogMixin):
-    def __init__(self, logs=None):
-        self._log = Log(logs)
+        rule.process_result(result_df)
 
-    def validate_fields(self, df, *args, **kwargs):
-        file_path = args[0]
-        file_type = args[1]
-
-        df = reader_utils.clean_column_names(df)
-
-        required_headers_present, msg = self.verify_headers(df, file_path, file_type, **kwargs)
-
-        if not required_headers_present:
-            return required_headers_present, self._log
-
-        structure_logs = self._log
-        self._log = Log()
-
-        self.verify_dataframe_values(df, file_type, **kwargs)
-
-        return True, structure_logs, self._log
