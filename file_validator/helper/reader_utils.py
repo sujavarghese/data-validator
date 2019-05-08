@@ -3,11 +3,20 @@ import math
 import traceback
 from datetime import datetime
 import numpy as np
+import pandas as pd
 import json
 
 FLOAT_RE = re.compile('^[-+]?[0-9]*\.?[0-9]+$')
 FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
 ALL_CAP_RE = re.compile('([a-z0-9])([A-Z])')
+
+
+def clean_value(val):
+    result = val
+    if isinstance(val, pd.Series):
+        result = val.values[0]
+
+    return result
 
 
 def is_empty(val):

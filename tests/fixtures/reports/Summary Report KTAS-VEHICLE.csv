@@ -1,0 +1,47 @@
+Summary,Details
+File path,/Users/sujavarghese/projects/file-validator/tests/fixtures/tbl_account_golden_gate_12020202020202.csv
+File Type,KTAS-VEHICLE
+Ran at,2019-05-08 12:25:57.893864
+Validated Attributes,"['test_column_1', 'test_column_2']"
+Total Number of Records,4
+,
+,
+,
+Rule Summary,
+,
+CDP_FL_001 Failure count,0
+CDP_FL_001 Pass count,1
+CDP_FL_002 Failure count,0
+CDP_FL_002 Pass count,1
+CDP_FL_003 Failure count,0
+CDP_FL_003 Pass count,1
+CDP_AT_002 Failure count,0
+CDP_AT_002 Pass count,4
+CDP_AT_005 Failure count,3
+CDP_AT_005 Pass count,1
+CDP_AT_003 Failure count,0
+CDP_AT_003 Pass count,4
+CDP_AT_003 Failure count,0
+CDP_AT_003 Pass count,4
+CDP_AT_004 Failure count,0
+CDP_AT_004 Pass count,4
+CDP_AT_004 Failure count,0
+CDP_AT_004 Pass count,4
+CDP_AT_006 Failure count,0
+CDP_AT_006 Pass count,4
+CDP_AT_006 Failure count,1
+CDP_AT_006 Pass count,3
+CDP_AT_007 Failure count,4
+CDP_AT_007 Pass count,0
+CDP_AT_007 Failure count,4
+CDP_AT_007 Pass count,0
+CDP_AT_008 Failure count,3
+CDP_AT_008 Pass count,1
+CDP_AT_008 Failure count,4
+CDP_AT_008 Pass count,0
+CDP_AT_009 Failure count,3
+CDP_AT_009 Pass count,1
+CDP_AT_009 Failure count,3
+CDP_AT_009 Pass count,1
+CDP_AT_010 Failure count,1
+CDP_AT_010 Pass count,3

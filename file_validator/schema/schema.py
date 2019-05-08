@@ -6,6 +6,7 @@ from file_validator.exception import (
 
 
 class Base:
+    schema_type = None
     accepted_file_types = ["csv", "xlsx"]
     silent_exit_for_empty_schema = True
     silent_exit_for_invalid_schema = True
@@ -21,9 +22,9 @@ class Base:
         self._fields = []
 
     def __call__(self, *args, **kwargs):
-        schema_type = args[0]
+        self.schema_type = args[0]
         config_json = args[1]
-        self._prepare_schema(schema_type, config_json)
+        self._prepare_schema(config_json)
 
     def schema(self):
         return self._schema
@@ -37,7 +38,7 @@ class Base:
     def _append_rule(self, rule):
         self._schema.append(rule)
 
-    def _prepare_schema(self, schema_type, config_dict):
+    def _prepare_schema(self, config_dict):
         if not config_dict:
             if self.silent_exit_for_empty_schema:
                 return
@@ -58,7 +59,7 @@ class Base:
                 raise SchemaMissingFieldsException("Provided config file missing fields {}. {}".format(
                     missing_fields, config_dict))
 
-        self._parse_schema(schema_type, config_dict)
+        self._parse_schema(config_dict)
 
     def set_validations_mapping(self, mapping):
         self._validation_mapping.add(mapping)
@@ -68,7 +69,7 @@ class Base:
             return self._validation_mapping
         return None
 
-    def _parse_schema(self, schema_type, config):
+    def _parse_schema(self, config):
         all_fields = config.get('fields', [])
         unique_keys = config.get('unique', [])
 
@@ -84,9 +85,9 @@ class Base:
         if not unique_keys:
             raise NotDeclaredUniqueFieldsException("Unique field needs to be declared.")
 
-        self.parse_schema(schema_type, config)
+        self.parse_schema(config)
 
-    def parse_schema(self, schema_type, config):
+    def parse_schema(self, config):
         raise NotImplementedError()
 
     def set_fields(self, fields):
@@ -122,7 +123,7 @@ class GenericSchema(Base):
 
         return value
 
-    def parse_schema(self, schema_type, config):
+    def parse_schema(self, config):
         all_fields = config.get('fields', [])
         validations = config.get('validations', [])
         unique_keys = config.get('unique', [])
@@ -174,7 +175,7 @@ class GenericSchema(Base):
 class FeatureSchema(GenericSchema):
     map = {}
 
-    def parse_schema(self, schema_type, config, **kwargs):
+    def parse_schema(self, config, **kwargs):
         self.register_custom_validations(self.map)
 
-        super(FeatureSchema, self).parse_schema(schema_type, config)
+        super(FeatureSchema, self).parse_schema(config)

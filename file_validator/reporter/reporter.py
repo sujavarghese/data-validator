@@ -1,5 +1,7 @@
 import pandas as pd
 import os.path
+from file_validator.helper.reader_utils import clean_value
+from file_validator.messages import MessageMapping
 
 
 EXCEL = 'xlsx'
@@ -75,48 +77,55 @@ class Report(Base):
 
         df = pd.DataFrame(columns=["Summary", "Details"])
         df = create_row(df, {"Summary": "File path", "Details": kwargs.get("file_path")})
+        df = create_row(df, {"Summary": "File Type", "Details": schema.schema_type})
         df = create_row(df, {"Summary": "Ran at", "Details": datetime.now()})
-        df = create_row(df, {"Summary": "Validated attributes", "Details": schema.fields()})
-        df = create_row(df, {"Summary": "Total records", "Details": kwargs.get("records_count")})
+        df = create_row(df, {"Summary": "Validated Attributes", "Details": schema.fields()})
+        df = create_row(df, {"Summary": "Total Number of Records", "Details": kwargs.get("records_count")})
 
         df = add_empty_row(df)
         df = add_empty_row(df)
+        df = add_empty_row(df)
         df = create_row(df, {"Summary": "Rule Summary", "Details": ""})
+        df = add_empty_row(df)
+
         for rule in schema.schema():
+            rule_id = MessageMapping().get_id(rule)
             df = create_row(df, {
-                "Summary": rule.validate_key + "_on_" + rule.attribute + " Failure count",
+                "Summary": rule_id + " Failure count",
                 "Details": len(rule.failed_objects())})
             df = create_row(df, {
-                "Summary": rule.validate_key + "_on_" + rule.attribute + " Pass count",
+                "Summary": rule_id + " Pass count",
                 "Details": len(rule.passed_objects())})
         return df
 
     def detailed_report_columns(self):
         return [
-            "Rule ID", "Category", "Sub Category", "Unique ID", "Attribute", "Value", "Fail Message", "Constraints",
-            "Rule Name",
+            "Rule ID", "Category", "Sub Category", "Type", "Unique ID", "Attribute", "Value", "Fail Message",
+            # "Rule Name",
         ]
 
     def report_validation_result(self, schema, **kwargs):
-        def prepare_report_row(rule_id, rule_name, category, sub_category, id, attribute, attr_value, constraint, message):
+        def prepare_report_row(rule_id, rule_name, category, typ, sub_category, id, attribute, attr_value, constraint, message):
             return {
                 "Rule ID": rule_id,
-                "Rule Name": rule_name,
+                # "Rule Name": rule_name,
                 "Category": category,
+                "Type": typ,
                 "Sub Category": sub_category,
                 "Unique ID": id,
                 "Attribute": attribute,
                 "Value": attr_value,
-                "Constraints": constraint,
+                # "Constraints": constraint,
                 "Fail Message": message
             }
 
         df = pd.DataFrame(columns=self.detailed_report_columns())
 
+        schema_type = schema.schema_type
         for rule in schema.schema():
             attribute = rule.attribute
-            rule_id = rule.validate_key + "_on_" + attribute
-            rule_name = rule.name()
+            rule_name = rule.validate_key + " on " + attribute
+            rule_id = MessageMapping().get_id(rule)
             category = rule.tags[0]
             sub_category = rule.tags[1] if len(rule.tags) > 1 else None
             constraint = rule.constraint
@@ -124,13 +133,16 @@ class Report(Base):
 
             if not status:
                 if rule.is_file_rule:
-                    df = df.append(prepare_report_row(rule_id, rule_name, category, sub_category,
-                        kwargs.get("file_path", 'FILE'), attribute, "N/A", constraint, rule.fail_message()), ignore_index=True)
+                    df = df.append(prepare_report_row(rule_id, rule_name, category, schema_type, sub_category,
+                        kwargs.get("file_path", 'FILE'), attribute, "N/A", constraint, rule.fail_message()),
+                                   ignore_index=True)
                 else:
                     for key, failed_record in rule.failed_objects().iterrows():
-                        df = df.append(prepare_report_row(rule_id, rule_name, category, sub_category,
-                            failed_record[rule.unique_key], attribute, failed_record[attribute], constraint,
-                            rule.fail_message(failed_record, **kwargs)), ignore_index=True)
+                        unique_id = clean_value(failed_record[rule.unique_key])
+                        attr_value = clean_value(failed_record[attribute])
+                        df = df.append(prepare_report_row(rule_id, rule_name, category, schema_type, sub_category,
+                            unique_id, attribute, attr_value, constraint, rule.fail_message(failed_record, **kwargs)),
+                                       ignore_index=True)
         return df
 
 
@@ -178,8 +190,8 @@ class ExcelReportWriter(ReportWriter):
         detailed_report_name = kwargs.get("detailed_name", "Detailed Report")
 
         with pd.ExcelWriter(self.summary_path) as writer:
-            report.summary().to_excel(writer, sheet_name=summary_report_name)
-            report.detailed().to_excel(writer, sheet_name=detailed_report_name)
+            report.summary().to_excel(writer, index=False, sheet_name=summary_report_name)
+            report.detailed().to_excel(writer, index=False, sheet_name=detailed_report_name)
 
 
 class PDFReportWriter(ReportWriter):

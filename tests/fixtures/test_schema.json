@@ -10,19 +10,19 @@
       "fields": ["FILE"],
       "constraint": ["^tbl_account_golden_gate_[\\d]{14}.csv$"],
       "pre-validation": [],
-      "message": "File {} doesn't follow naming format."
+      "message": "{} doesn't follow naming format."
     },
     "file_type": {
       "tags": ["File Structure", "Extension"],
       "fields": ["FILE"],
       "constraint": ["csv"],
-      "message": "File {} is not an accepted file type. Accepted file types are {}"
+      "message": "{} is not an accepted file type. Accepted file types are {}"
     },
     "check_column_headers": {
       "tags": ["File Structure", "Column"],
       "fields": ["FILE"],
       "constraint": ["test_column_1", "test_column_2"],
-      "message": "File {} is not an accepted file type. Accepted file types are {}"
+      "message": "File header validation failed. Missing columns are {}"
     },
     "check_string": {
       "tags": ["Attribute", "String"],
@@ -35,8 +35,13 @@
       "fields": ["test_column_2"],
       "message": "'{}' is not date value"
     },
+    "check_not_null": {
+      "tags": ["Attribute", "Not NULL"],
+      "fields": ["test_column_1", "test_column_2"],
+      "message": "'{}' should not be null."
+    },
     "required": {
-      "tags": ["Attribute", "Data", "Required"],
+      "tags": ["Attribute", "Required"],
       "fields": ["test_column_1", "test_column_2"],
       "message": "'{}' has to have valid value"
     },
@@ -96,7 +101,7 @@
         },
         {
           "fields": ["test_column_2"],
-          "constraint": ["YYYY-MM-DD"]
+          "constraint": ["%d/%m/%Y"]
         }
       ],
       "message": "'{}' does not follow date format {}."
@@ -105,11 +110,6 @@
       "tags": ["Attribute", "Alpha Numeric"],
       "fields": ["test_column_1"],
       "message": "'{}' is not alphanumeric."
-    },
-    "check_not_null": {
-      "tags": ["Attribute", "Not NULL"],
-      "fields": ["test_column_1", "test_column_2"],
-      "message": "'{}' should not be null."
     }
   }
 }

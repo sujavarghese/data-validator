@@ -1,4 +1,13 @@
 from datetime import datetime
+import pandas as pd
+
+
+def clean_value(val):
+    result = val
+    if isinstance(val, pd.Series):
+        result = val.values[0]
+
+    return result
 
 
 def empty(value):

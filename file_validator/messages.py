@@ -1,4 +1,5 @@
 from collections import defaultdict
+from file_validator.validator.rules import *
 
 
 class Base(object):
@@ -9,48 +10,55 @@ class Base(object):
         getattr(self, key, None)
 
 
-class Prefixes(Base):
-    pass
-
-
-class Messages(Base):
-    FAILED = "Failed"
-    PASSED = "Passed"
-
-
 class MessageCodes(Base):
-    CDP_001 = "CDP_001"
-    CDP_002 = "CDP_002"
-    CDP_003 = "CDP_003"
-    CDP_004 = "CDP_004"
-    CDP_005 = "CDP_005"
-    CDP_006 = "CDP_006"
-    CDP_007 = "CDP_007"
-    CDP_008 = "CDP_008"
-    CDP_009 = "CDP_009"
-    CDP_010 = "CDP_010"
+    CDP_FL_001 = "CDP_FL_001"
+    CDP_FL_002 = "CDP_FL_002"
+    CDP_FL_003 = "CDP_FL_003"
+    CDP_FL_004 = "CDP_FL_004"
+    CDP_FL_005 = "CDP_FL_005"
+    CDP_FL_006 = "CDP_FL_006"
+
+    CDP_AT_001 = "CDP_AT_001"
+    CDP_AT_002 = "CDP_AT_002"
+    CDP_AT_003 = "CDP_AT_003"
+    CDP_AT_004 = "CDP_AT_004"
+    CDP_AT_005 = "CDP_AT_005"
+    CDP_AT_006 = "CDP_AT_006"
+    CDP_AT_007 = "CDP_AT_007"
+    CDP_AT_008 = "CDP_AT_008"
+    CDP_AT_009 = "CDP_AT_009"
+    CDP_AT_010 = "CDP_AT_010"
 
 
 class MessageMapping:
     message_code_mapping = defaultdict()
 
-    def map(self):
-        from file_validator.reader.messages import ReaderMessages
-        from file_validator.validator.messages import ValidatorMessages
-        self.message_code_mapping.update({
-            MessageCodes.CDP_001: ReaderMessages.FILE_EXISTS_VALIDATION_PASSED,
-            MessageCodes.CDP_002: ReaderMessages.FILE_EXISTS_VALIDATION_FAILED,
-            MessageCodes.CDP_003: ReaderMessages.FILE_EXTN_VALIDATION_PASSED,
-            MessageCodes.CDP_004: ReaderMessages.FILE_EXTN_VALIDATION_FAILED,
-            MessageCodes.CDP_005: ReaderMessages.FILE_READER_VALIDATION_PASSED,
-            MessageCodes.CDP_006: ReaderMessages.FILE_READER_VALIDATION_FAILED,
-            MessageCodes.CDP_007: ValidatorMessages.HEADER_VALIDATION_PASSED,
-            MessageCodes.CDP_008: ValidatorMessages.HEADER_VALIDATION_FAILED,
-            MessageCodes.CDP_009: ValidatorMessages.HEADER_VALIDATION_FAILED_WITH_NO_FILE,
-            MessageCodes.CDP_010: ValidatorMessages.HEADER_VALIDATION_FAILED_WITH_MISSING_COLUMN,
+    def __init__(self):
+        self.map()
 
+    def map(self):
+        self.message_code_mapping.update({
+            # File validation mapping
+            FileNameValidation: MessageCodes.CDP_FL_001,
+            FileTypeValidation: MessageCodes.CDP_FL_002,
+            HeaderValidation: MessageCodes.CDP_FL_003,
+            # Attribute validation mapping
+            DataTypeAttributeValidation: MessageCodes.CDP_AT_001,
+            IsStringAttributeValidation: MessageCodes.CDP_AT_002,
+            IsNullAttributeValidation: MessageCodes.CDP_AT_003,
+            RequiredAttributeValidation: MessageCodes.CDP_AT_004,
+            IsDateAttributeValidation: MessageCodes.CDP_AT_005,
+            AttributeLengthValidation: MessageCodes.CDP_AT_006,
+            RegexAttributeValidation: MessageCodes.CDP_AT_007,
+            EnumAttributeValidation: MessageCodes.CDP_AT_008,
+            DateFormatAttributeValidation: MessageCodes.CDP_AT_009,
+            AlphaNumericAttributeValidation: MessageCodes.CDP_AT_010,
         })
 
     def get_map(self):
         return self.message_code_mapping
+
+    def get_id(self, class_inst):
+        cls = type(class_inst)
+        return self.get_map().get(cls, None)
 

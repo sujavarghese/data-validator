@@ -1,6 +1,7 @@
 import re
+import os
 from file_validator.validator.utils import (
-    empty, is_date, required
+    empty, is_date, required, clean_value
 )
 from file_validator.validator.messages import ValidatorMessages
 
@@ -83,7 +84,7 @@ class AttributeValidation(Base):
 
     def fail_message(self, *args, **kwargs):
         failed_record = args[0]
-        return self.message.format(failed_record[self.attribute])
+        return self.message.format(clean_value(failed_record[self.attribute]))
 
     def execute(self, record, **kwargs):
         self._attr_value = self.get_value(record)
@@ -92,14 +93,14 @@ class AttributeValidation(Base):
 class ConstraintMessage(AttributeValidation):
     def fail_message(self, *args, **kwargs):
         failed_record = args[0]
-        return self.message.format(failed_record[self.attribute], self.constraint)
+        return self.message.format(clean_value(failed_record[self.attribute]), self.constraint)
 
 
 class FileNameValidation(FileValidation):
     message = ValidatorMessages.FILE_NAME_VALIDATION_FAILED
 
     def execute(self, df, **kwargs):
-        file_path = kwargs.get('file_path', '')
+        file_path = os.path.basename(kwargs.get('file_path', ''))
         file_path_format = self.constraint
         self._failed_info = file_path
 
@@ -149,6 +150,8 @@ class HeaderValidation(FileValidation):
 
 
 class DataTypeAttributeValidation(AttributeValidation):
+    tags = ["Attribute", "Data Type"]
+
     def execute(self, record, **kwargs):
         super(DataTypeAttributeValidation, self).execute(record, **kwargs)
         return type(self._attr_value) in kwargs.get('data_type')
@@ -163,7 +166,7 @@ class IsStringAttributeValidation(DataTypeAttributeValidation):
 class IsNullAttributeValidation(AttributeValidation):
     def execute(self, record, **kwargs):
         super(IsNullAttributeValidation, self).execute(record, **kwargs)
-        return empty(self._attr_value)
+        return not empty(self._attr_value)
 
 
 class RequiredAttributeValidation(AttributeValidation):
@@ -181,11 +184,11 @@ class IsDateAttributeValidation(AttributeValidation):
 class AttributeLengthValidation(AttributeValidation):
     def execute(self, record, **kwargs):
         super(AttributeLengthValidation, self).execute(record, **kwargs)
-        return self.constraint[0] > len(self._attr_value) > self.constraint[1]
+        return self.constraint[0] <= len(self._attr_value) <= self.constraint[1]
 
     def fail_message(self, *args, **kwargs):
         failed_record = args[0]
-        return self.message.format(self.attribute, self.constraint, failed_record[self.attribute])
+        return self.message.format(self.attribute, self.constraint, clean_value(failed_record[self.attribute]))
 
 
 class RegexAttributeValidation(ConstraintMessage):
@@ -208,12 +211,12 @@ class DateFormatAttributeValidation(ConstraintMessage):
 
 class AlphaNumericAttributeValidation(RegexAttributeValidation):
     def execute(self, record, **kwargs):
-        self.constraint = ["^[a-z0-9]$"]
+        self.constraint = ["^[A-Za-z0-9]+$"]
         return super(AlphaNumericAttributeValidation, self).execute(record, **kwargs)
 
     def fail_message(self, *args, **kwargs):
         failed_record = args[0]
-        return self.message.format(failed_record[self.attribute])
+        return self.message.format(clean_value(failed_record[self.attribute]))
 
 
 class UniqueAttributeValidation(AttributeValidation):

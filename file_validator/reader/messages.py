@@ -1,4 +1,18 @@
-from file_validator.messages import Prefixes, Messages
+class Base(object):
+    def all(self):
+        return [name for name, value in vars(self).items() if not name.startswith('_')]
+
+    def get(self, key):
+        getattr(self, key, None)
+
+
+class Prefixes(Base):
+    pass
+
+
+class Messages(Base):
+    FAILED = "Failed"
+    PASSED = "Passed"
 
 
 class ReaderPrefixes(Prefixes):
