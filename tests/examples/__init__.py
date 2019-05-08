@@ -103,6 +103,7 @@ def main():
 
     filepath = '/Users/sujavarghese/projects/file-validator/tests/fixtures/tbl_contact_golden_gate_12020202020202.csv'
     schema_type = "KTAS-CONTACT"
+    extn = 'csv'
     summary_name = "Summary Report {}.csv".format(schema_type)
     detailed_name = "Detailed Report {}.csv".format(schema_type)
 
