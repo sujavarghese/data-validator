@@ -1,0 +1,28 @@
+Rule ID,Category,Sub Category,Type,Unique ID,Attribute,Value,Fail Message
+CDP_FL_001,File Structure,Naming,KTAS-CONTACT,/Users/sujavarghese/projects/file-validator/tests/examples/sample_1/input/tbl_contact_golden_gate_12020202020202.csv,FILE,N/A,tbl_contact_golden_gate_12020202020202.csv doesn't follow naming format.
+CDP_AT_005,Attribute,Date,KTAS-CONTACT,test1,test_column_2,test2/test1/test3,'test2/test1/test3' is not date value
+CDP_AT_005,Attribute,Date,KTAS-CONTACT,1,test_column_2,2,'2' is not date value
+CDP_AT_005,Attribute,Date,KTAS-CONTACT,1,test_column_2,3.09,'3.09' is not date value
+CDP_AT_006,Attribute,Length,KTAS-CONTACT,test1,test_column_2,test2/test1/test3,"test_column_2 can contain value between [0, 10] char long. test2/test1/test3 is above the limit"
+CDP_AT_007,Attribute,Regular Expression,KTAS-CONTACT,test1,test_column_1,test1,'test1' does not match regex '['^[a-z]$']'.
+CDP_AT_007,Attribute,Regular Expression,KTAS-CONTACT,1,test_column_1,1,'1' does not match regex '['^[a-z]$']'.
+CDP_AT_007,Attribute,Regular Expression,KTAS-CONTACT,1,test_column_1,1,'1' does not match regex '['^[a-z]$']'.
+CDP_AT_007,Attribute,Regular Expression,KTAS-CONTACT,12/01/1989,test_column_1,12/01/1989,'12/01/1989' does not match regex '['^[a-z]$']'.
+CDP_AT_007,Attribute,Regular Expression,KTAS-CONTACT,test1,test_column_2,test2/test1/test3,'test2/test1/test3' does not match regex '['^[a-zA-Z]$']'.
+CDP_AT_007,Attribute,Regular Expression,KTAS-CONTACT,1,test_column_2,2,'2' does not match regex '['^[a-zA-Z]$']'.
+CDP_AT_007,Attribute,Regular Expression,KTAS-CONTACT,1,test_column_2,3.09,'3.09' does not match regex '['^[a-zA-Z]$']'.
+CDP_AT_007,Attribute,Regular Expression,KTAS-CONTACT,12/01/1989,test_column_2,30/01/1989,'30/01/1989' does not match regex '['^[a-zA-Z]$']'.
+CDP_AT_008,Attribute,Enumeration,KTAS-CONTACT,1,test_column_1,1,"'1' is not part of enum list ['TEST1', 'TEST2']."
+CDP_AT_008,Attribute,Enumeration,KTAS-CONTACT,1,test_column_1,1,"'1' is not part of enum list ['TEST1', 'TEST2']."
+CDP_AT_008,Attribute,Enumeration,KTAS-CONTACT,12/01/1989,test_column_1,12/01/1989,"'12/01/1989' is not part of enum list ['TEST1', 'TEST2']."
+CDP_AT_008,Attribute,Enumeration,KTAS-CONTACT,TEST1,test_column_2,test2/test1/test3,"'test2/test1/test3' is not part of enum list ['m', 'f']."
+CDP_AT_008,Attribute,Enumeration,KTAS-CONTACT,1,test_column_2,2,"'2' is not part of enum list ['m', 'f']."
+CDP_AT_008,Attribute,Enumeration,KTAS-CONTACT,1,test_column_2,3.09,"'3.09' is not part of enum list ['m', 'f']."
+CDP_AT_008,Attribute,Enumeration,KTAS-CONTACT,12/01/1989,test_column_2,30/01/1989,"'30/01/1989' is not part of enum list ['m', 'f']."
+CDP_AT_009,Attribute,Date Format,KTAS-CONTACT,TEST1,test_column_1,TEST1,'TEST1' does not follow date format None.
+CDP_AT_009,Attribute,Date Format,KTAS-CONTACT,1,test_column_1,1,'1' does not follow date format None.
+CDP_AT_009,Attribute,Date Format,KTAS-CONTACT,1,test_column_1,1,'1' does not follow date format None.
+CDP_AT_009,Attribute,Date Format,KTAS-CONTACT,TEST1,test_column_2,test2/test1/test3,'test2/test1/test3' does not follow date format ['%d/%m/%Y'].
+CDP_AT_009,Attribute,Date Format,KTAS-CONTACT,1,test_column_2,2,'2' does not follow date format ['%d/%m/%Y'].
+CDP_AT_009,Attribute,Date Format,KTAS-CONTACT,1,test_column_2,3.09,'3.09' does not follow date format ['%d/%m/%Y'].
+CDP_AT_010,Attribute,Alpha Numeric,KTAS-CONTACT,12/01/1989,test_column_1,12/01/1989,'12/01/1989' is not alphanumeric.

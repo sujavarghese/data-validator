@@ -5,6 +5,7 @@ from file_validator.validator.rules import (
     RequiredAttributeValidation, IsNullAttributeValidation, IsDateAttributeValidation, FileNameValidation,
     FileTypeValidation, HeaderValidation, IsStringAttributeValidation, AttributeLengthValidation,
     RegexAttributeValidation, EnumAttributeValidation, DateFormatAttributeValidation, AlphaNumericAttributeValidation,
+    IsIntegerAttributeValidation, EmailValidation, PhoneValidation,
 )
 
 
@@ -26,11 +27,14 @@ BASE_RULES_MAPPING = {
     "file_type": FileTypeValidation,
     "check_column_headers": HeaderValidation,
     "check_string": IsStringAttributeValidation,
+    "check_int": IsIntegerAttributeValidation,
     "attribute_length": AttributeLengthValidation,
     "match_regex": RegexAttributeValidation,
     "match_enum": EnumAttributeValidation,
     "match_date_format": DateFormatAttributeValidation,
     "check_alphanumeric": AlphaNumericAttributeValidation,
+    "email": EmailValidation,
+    "phone": PhoneValidation,
 }
 
 
@@ -64,4 +68,4 @@ class SchemaFactory:
 
     def read(self, file_type, config_path):
         # check_extn set to False because JSON is not an accepted input data type.
-        return JSONFileReader().validate_and_read(config_path, file_type, check_extn=False, as_dict=True)
+        return JSONFileReader().validate_and_read(config_path, 'json', check_extn=False, as_dict=True, is_config=True)

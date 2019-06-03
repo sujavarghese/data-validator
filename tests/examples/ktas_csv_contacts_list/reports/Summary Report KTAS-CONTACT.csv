@@ -1,0 +1,15 @@
+Summary,Details
+File path,/Users/sujavarghese/projects/file-validator/tests/examples/ktas_csv_contacts_list/input/KTAS_CONTACTSLIST_IMPORT_DAILY_20190313230237.csv
+File Type,KTAS-CONTACT
+Ran at,2019-06-03 15:28:12.713115
+Validated Attributes,"['CUSTOMER_ID_', 'EMAIL_ADDRESS_', 'EMAIL_PERMISSIO', 'POSTAL_STREET_1', 'POSTAL_STREET_2', 'STATE_', 'FULL_NAME', 'FIRST_NAME', 'LAST_NAME', 'PHONE_NUMBER', 'BUSINESS_NAME', 'LST_PAYMT_TYPE', 'KTAS_INSUR_CUST', 'POSTAL_CODE']"
+Total Number of Records,100
+,
+Rule Summary,
+,
+CDP_AT_013: Failures,2
+CDP_AT_013: Passes,198
+CDP_AT_011: Failures,1
+CDP_AT_011: Passes,99
+CDP_AT_006: Failures,1
+CDP_AT_006: Passes,199

@@ -48,3 +48,9 @@ def upper_case(value):
 
 def lower_case(value):
     return str(value).lower()
+
+
+def remove_space(value):
+    if isinstance(value, str):
+        return value.strip()
+    return value

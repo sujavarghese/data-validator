@@ -1,0 +1,23 @@
+Summary,Details
+File path,/Users/sujavarghese/projects/file-validator/tests/examples/sample_1/input/tbl_contact_golden_gate_12020202020202.csv
+File Type,KTAS-CONTACT
+Ran at,2019-06-03 11:51:22.091638
+Validated Attributes,"['test_column_1', 'test_column_2']"
+Total Number of Records,4
+,
+Rule Summary,
+,
+CDP_FL_001: Failures,1
+CDP_FL_001: Passes,0
+CDP_AT_005: Failures,3
+CDP_AT_005: Passes,1
+CDP_AT_006: Failures,1
+CDP_AT_006: Passes,7
+CDP_AT_007: Failures,8
+CDP_AT_007: Passes,0
+CDP_AT_008: Failures,7
+CDP_AT_008: Passes,1
+CDP_AT_009: Failures,6
+CDP_AT_009: Passes,2
+CDP_AT_010: Failures,1
+CDP_AT_010: Passes,3

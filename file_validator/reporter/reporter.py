@@ -1,28 +1,26 @@
+from collections import defaultdict
+from datetime import datetime
 import pandas as pd
-import os.path
-from file_validator.helper.reader_utils import clean_value
+
+from file_validator.helper.utils import clean_value
 from file_validator.messages import MessageMapping
 
 
-EXCEL = 'xlsx'
-CSV = 'csv'
-PDF = 'pdf'
-
-
 class Base(object):
-    def __init__(self):
+    def __init__(self, message_map=MessageMapping):
         self._summary = pd.DataFrame([], [])
         self._detailed = pd.DataFrame([], [])
+        self.message_map = message_map()
 
     def report(self, schema, logs, **kwargs):
         log_status = self.find_log_status(logs, **kwargs)
 
         if log_status is False:
-            self._summary = self.report_logs(logs)
+            self._summary = self.logs(logs)
             return log_status
 
-        self._detailed = self.report_validation_result(schema, **kwargs)
-        self._summary = self.prepare_summary_report(schema, **kwargs)
+        self._detailed = self.validation_result(schema, **kwargs)
+        self._summary = self.prepare_summary(schema, **kwargs)
         return log_status
 
     @staticmethod
@@ -35,7 +33,7 @@ class Base(object):
         ])
 
     @staticmethod
-    def report_logs(logs):
+    def logs(logs):
         df = pd.DataFrame(columns=["Name", "Status", "Description"])
         [
             df.append({
@@ -55,20 +53,21 @@ class Base(object):
     def detailed(self):
         return self._detailed
 
-    def detailed_report_columns(self):
+    def detailed_columns(self):
         raise NotImplementedError()
 
-    def report_validation_result(self, schema, **kwargs):
+    def validation_result(self, schema, **kwargs):
         raise NotImplementedError()
 
-    def prepare_summary_report(self, schema, **kwargs):
+    def prepare_summary(self, schema, **kwargs):
+        raise NotImplementedError()
+
+    def write_into_db(self, validation_record):
         raise NotImplementedError()
 
 
 class Report(Base):
-    def prepare_summary_report(self, schema, **kwargs):
-        from datetime import datetime
-
+    def prepare_summary(self, schema, **kwargs):
         def create_row(df, row):
             return df.append(row, ignore_index=True)
 
@@ -83,134 +82,85 @@ class Report(Base):
         df = create_row(df, {"Summary": "Total Number of Records", "Details": kwargs.get("records_count")})
 
         df = add_empty_row(df)
-        df = add_empty_row(df)
-        df = add_empty_row(df)
         df = create_row(df, {"Summary": "Rule Summary", "Details": ""})
         df = add_empty_row(df)
 
+        summarise_rules = defaultdict(list)
+
         for rule in schema.schema():
-            rule_id = MessageMapping().get_id(rule)
-            df = create_row(df, {
-                "Summary": rule_id + " Failure count",
-                "Details": len(rule.failed_objects())})
-            df = create_row(df, {
-                "Summary": rule_id + " Pass count",
-                "Details": len(rule.passed_objects())})
+            summarise_rules[self.message_map.get_id(rule)].append(rule)
+
+        for rule_id, rules in summarise_rules.items():
+            pass_count = 0
+            fail_count = 0
+            for rule in rules:
+                pass_count += len(rule.passed_objects())
+                fail_count += len(rule.failed_objects())
+
+            if fail_count > 0:
+                df = create_row(df, {
+                    "Summary": str(rule_id) + ": Failures",
+                    "Details": fail_count})
+                df = create_row(df, {
+                    "Summary": str(rule_id) + ": Passes",
+                    "Details": pass_count})
         return df
 
-    def detailed_report_columns(self):
+    def detailed_columns(self):
         return [
             "Rule ID", "Category", "Sub Category", "Type", "Unique ID", "Attribute", "Value", "Fail Message",
             # "Rule Name",
         ]
 
-    def report_validation_result(self, schema, **kwargs):
-        def prepare_report_row(rule_id, rule_name, category, typ, sub_category, id, attribute, attr_value, constraint, message):
-            return {
-                "Rule ID": rule_id,
-                # "Rule Name": rule_name,
-                "Category": category,
-                "Type": typ,
-                "Sub Category": sub_category,
-                "Unique ID": id,
-                "Attribute": attribute,
-                "Value": attr_value,
-                # "Constraints": constraint,
-                "Fail Message": message
-            }
+    def prepare_row(self, df, rule, rule_id, category, typ, sub_category, columns, failed_record=None, **kwargs):
+        unique_id = kwargs.get("file_path", 'FILE') if rule.is_file_rule else clean_value(failed_record[rule.unique_key])
+        attr_value = "N/A" if rule.is_file_rule else clean_value(failed_record[rule.attribute])
+        message = rule.fail_message() if rule.is_file_rule else rule.fail_message(failed_record, **kwargs)
 
-        df = pd.DataFrame(columns=self.detailed_report_columns())
+        values = {
+            "Rule ID": rule_id,
+            # "Rule Name": rule_name,
+            "Category": category,
+            "Type": typ,
+            "Sub Category": sub_category,
+            "Unique ID": unique_id,
+            "Attribute": rule.attribute,
+            "Value": attr_value,
+            # "Constraints": rule.constraint,
+            "Fail Message": message
+        }
+        self.length_check(columns, values)
+        return df.append(values, ignore_index=True)
+
+    def length_check(self, c_list, v_list):
+        if len(c_list) != len(v_list):
+            raise Exception("Columns and rows have different number of items. "
+                            "Please confirm mapping again.")
+
+    def validation_result(self, schema, **kwargs):
+        columns = self.detailed_columns()
+        df = pd.DataFrame(columns=columns)
 
         schema_type = schema.schema_type
         for rule in schema.schema():
-            attribute = rule.attribute
-            rule_name = rule.validate_key + " on " + attribute
-            rule_id = MessageMapping().get_id(rule)
+            rule_id = self.message_map.get_id(rule)
             category = rule.tags[0]
             sub_category = rule.tags[1] if len(rule.tags) > 1 else None
-            constraint = rule.constraint
-            status = rule.failed_objects().empty
+            passed = rule.failed_objects().empty
 
-            if not status:
+            if not passed:
                 if rule.is_file_rule:
-                    df = df.append(prepare_report_row(rule_id, rule_name, category, schema_type, sub_category,
-                        kwargs.get("file_path", 'FILE'), attribute, "N/A", constraint, rule.fail_message()),
-                                   ignore_index=True)
+                    df = self.prepare_row(df, rule, rule_id, category, schema_type, sub_category, columns, None, **kwargs)
                 else:
                     for key, failed_record in rule.failed_objects().iterrows():
-                        unique_id = clean_value(failed_record[rule.unique_key])
-                        attr_value = clean_value(failed_record[attribute])
-                        df = df.append(prepare_report_row(rule_id, rule_name, category, schema_type, sub_category,
-                            unique_id, attribute, attr_value, constraint, rule.fail_message(failed_record, **kwargs)),
-                                       ignore_index=True)
+                        df = self.prepare_row(df, rule, rule_id, category, schema_type, sub_category, columns, failed_record, **kwargs)
+
         return df
 
-
-class ReportWriter(object):
-    summary_path = None
-    detailed_path = None
-    summary_json = None
-    detailed_json = None
-
-    def __init__(self):
-        self.allowed_types = [EXCEL, CSV, PDF]
-
-    def set_allowed_type(self, type):
-        self.allowed_types.append(type)
-
-    def write(self, report, op_type, **kwargs):
-        if op_type not in self.allowed_types:
-            raise Exception("{} is not an allowed output format. You need to create a writer and add it in the "
-                            "allowed_types. The allowed_types are: {}".format(op_type, self.allowed_types))
-        pd.set_option('display.max_colwidth', -1)
-        self.summary_json = report.summary().to_json()
-        self.detailed_json = report.detailed().to_json()
-
-
-class CSVReportWriter(ReportWriter):
-    def write(self, report, op_type=CSV, **kwargs):
-        super(CSVReportWriter, self).write(report, op_type, **kwargs)
-
-        report_path = kwargs.get("report_path")
-        self.summary_path = os.path.join(report_path, kwargs.get("summary_name"))
-        self.detailed_path = os.path.join(report_path, kwargs.get("detailed_name"))
-
-        report.summary().to_csv(self.summary_path, index=False, mode='a')
-        report.detailed().to_csv(self.detailed_path, index=False, mode='a')
-
-
-class ExcelReportWriter(ReportWriter):
-    def write(self, report, op_type=EXCEL, **kwargs):
-        super(ExcelReportWriter, self).write(report, op_type, **kwargs)
-
-        report_path = kwargs.get("report_path")
-        self.summary_path = os.path.join(report_path, kwargs.get("report_name"))
-        self.detailed_path = self.summary_path
-        summary_report_name = kwargs.get("summary_name", "Summary Report")
-        detailed_report_name = kwargs.get("detailed_name", "Detailed Report")
-
-        with pd.ExcelWriter(self.summary_path) as writer:
-            report.summary().to_excel(writer, index=False, sheet_name=summary_report_name)
-            report.detailed().to_excel(writer, index=False, sheet_name=detailed_report_name)
-
-
-class PDFReportWriter(ReportWriter):
-    def write(self, report, op_type=PDF, **kwargs):
-        super(PDFReportWriter, self).write(report, op_type, **kwargs)
-
-        report_path = kwargs.get("report_path")
-        self.summary_path = os.path.join(report_path, kwargs.get("summary_name"))
-        self.detailed_path = os.path.join(report_path, kwargs.get("detailed_name"))
-
-        summary_html = report.summary().to_html(
-            notebook=True, index=False, na_rep="<br/>", border="border", table_id="summary", justify="left")
-        detailed_html = report.detailed().to_html(notebook=True, index=False, na_rep="", table_id="detailed", justify="left")
-
-        import pdfkit
-        pdfkit.from_string(
-            summary_html, self.summary_path,
-            options={"--title": "Non Conformance Report - Summary", "header-left": "Non Conformance Report - Summary"})
-        pdfkit.from_string(
-            detailed_html, self.detailed_path,
-            options={"--orientation": "Landscape", "--page-size": "A2", "--title": "Non Conformance Report",
-                     "header-left": "Non Conformance Report", "--zoom": 1.5})
+    def write_into_db(self, validation_record):
+        from file_validator.models import Status
+        validation_record.status = Status.validated
+        validation_record.ended_at = datetime.now()
+        validation_record.summary = self.summary().to_json()
+        validation_record.detailed = self.detailed().to_json()
+        return validation_record

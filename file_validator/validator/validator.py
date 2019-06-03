@@ -83,9 +83,12 @@ class Validator(AttributeValidator, FileValidator):
 
         for rule in schema.validations():
             logger.info("Starting Rule {}" .format(rule.name()))
-            result_df = self._validate_rule(
-                self.apply_pre_validation_correction(df, rule, **kwargs), rule, **kwargs)
-            self._post_validate_rule(result_df, df, rule, **kwargs)
+            try:
+                result_df = self._validate_rule(
+                    self.apply_pre_validation_correction(df, rule, **kwargs), rule, **kwargs)
+                self._post_validate_rule(result_df, df, rule, **kwargs)
+            except Exception as e:
+                logger.info("Failed Rule {}. {}".format(rule.name(), e))
             logger.info("Ending Rule {}".format(rule.name()))
 
         return df, schema
@@ -138,9 +141,9 @@ class Validator(AttributeValidator, FileValidator):
         """
         df = self.apply_constraints(df, rule, **kwargs)
         if rule.is_file_rule:
-            result_df = pd.DataFrame({rule.name(): rule.execute(df, **kwargs)}, index=[rule.name()])
+            result_df = pd.DataFrame({rule.name(): rule._execute(df, **kwargs)}, index=[rule.name()])
         else:
-            result_df = pd.DataFrame(df[rule.attribute].apply(rule.execute, **kwargs))
+            result_df = pd.DataFrame(df[rule.attribute].apply(rule._execute, **kwargs))
         result_df = result_df.rename(columns={result_df.columns[0]: rule.name()})
 
         self.log.record(rule.name(), "Validated field {}.".format(rule.attribute), all(result_df[rule.name()]))

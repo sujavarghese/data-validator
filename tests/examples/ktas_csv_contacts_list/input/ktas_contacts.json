@@ -1,0 +1,110 @@
+{
+  "fields": ["CUSTOMER_ID_", "EMAIL_ADDRESS_", "EMAIL_PERMISSIO", "POSTAL_STREET_1", "POSTAL_STREET_2", "STATE_", "FULL_NAME",
+    "FIRST_NAME", "LAST_NAME", "PHONE_NUMBER", "BUSINESS_NAME", "LST_PAYMT_TYPE", "KTAS_INSUR_CUST", "POSTAL_CODE"
+  ],
+  "unique": ["CUSTOMER_ID_"],
+  "validations": {
+    "file_name": {
+      "tags": ["File Structure", "Naming"],
+      "fields": ["FILE"],
+      "constraint": ["^KTAS_CONTACTSLIST_IMPORT_DAILY_[\\d]{14}.csv$"],
+      "message": "{} doesn't follow naming format. Expected format is 'KTAS_CONTACTSLIST_IMPORT_DAILY_[\\d]{14}.csv'."
+    },
+    "file_type": {
+      "tags": ["File Structure", "Extension"],
+      "fields": ["FILE"],
+      "constraint": ["csv"],
+      "message": "{} is not an accepted file type. Accepted file types are {}"
+    },
+    "check_column_headers": {
+      "tags": ["File Structure", "Column"],
+      "fields": ["FILE"],
+      "constraint": ["CUSTOMER_ID_", "EMAIL_ADDRESS_", "EMAIL_PERMISSIO", "POSTAL_STREET_1", "POSTAL_STREET_2", "STATE_", "FULL_NAME",
+        "FIRST_NAME", "LAST_NAME", "PHONE_NUMBER", "BUSINESS_NAME", "LST_PAYMT_TYPE", "KTAS_INSUR_CUST", "POSTAL_CODE"
+      ],
+      "message": "File header validation failed. Missing columns are {}"
+    },
+    "check_int": {
+      "tags": ["Attribute", "Integer"],
+      "fields": ["CUSTOMER_ID_", "POSTAL_CODE"],
+      "message": "'{}' is not integer value"
+    },
+    "check_string": {
+      "tags": ["Attribute", "String"],
+      "fields": ["EMAIL_ADDRESS_", "EMAIL_PERMISSIO", "POSTAL_STREET_1", "POSTAL_STREET_2", "STATE_", "FULL_NAME",
+        "FIRST_NAME", "LAST_NAME", "PHONE_NUMBER", "BUSINESS_NAME", "LST_PAYMT_TYPE", "KTAS_INSUR_CUST"
+      ],
+      "message": "'{}' is not string value"
+    },
+    "required": {
+      "tags": ["Attribute", "Required"],
+      "fields": ["CUSTOMER_ID_", "EMAIL_PERMISSIO", "POSTAL_STREET_1", "POSTAL_STREET_2", "STATE_", "FULL_NAME", "FIRST_NAME",
+        "LAST_NAME"
+      ],
+      "message": "'{}' has to have valid value"
+    },
+    "email": {
+      "tags": ["Attribute", "Email"],
+      "fields": ["EMAIL_ADDRESS_"],
+      "message": "'{}' is not valid email."
+    },
+    "phone": {
+      "tags": ["Attribute", "Email"],
+      "fields": ["PHONE_NUMBER"],
+      "message": "'{}' is not valid phone."
+    },
+    "attribute_length": {
+      "tags": ["Attribute", "Length"],
+      "allow_multiple_config": "true",
+      "configs" : [
+        {
+          "fields": ["EMAIL_PERMISSIO"],
+          "constraint": [1, 1]
+        },
+        {
+          "fields": ["PHONE_NUMBER"],
+          "constraint": [0, 11]
+        }
+      ],
+      "message": "{} can contain value between {} char long. {} is does not follow this rule"
+    },
+    "match_regex": {
+      "tags": ["Attribute", "Regular Expression"],
+      "allow_multiple_config": "true",
+      "configs" : [
+        {
+          "fields": ["STATE_"],
+          "constraint": ["^[A-Z]{2,3}$"],
+          "pre-validation": ["upper_case"]
+        },
+        {
+          "fields": ["LST_PAYMT_TYPE"],
+          "constraint": ["^[A-Z]{3}$"]
+        },
+        {
+          "fields": ["POSTAL_CODE"],
+          "constraint": ["^[0-9]{4}$"],
+          "message": "'{}' is not valid postal code."
+        }
+      ],
+      "message": "'{}' does not match regex '{}'."
+    },
+    "match_enum": {
+      "tags": ["Attribute", "Enumeration"],
+      "allow_multiple_config": "true",
+      "configs" : [
+        {
+          "fields": ["EMAIL_PERMISSIO"],
+          "constraint": ["I", "O"],
+          "pre-validation": ["upper_case"]
+        },
+        {
+          "fields": ["STATE_"],
+          "constraint": ["VIC", "QLD", "TAS", "NSW", "NT", "WA", "SA", "ACT"],
+          "pre-validation": ["upper_case"]
+        }
+      ],
+      "message": "'{}' is not part of enum list {}."
+    }
+  }
+}

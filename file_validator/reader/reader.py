@@ -3,7 +3,7 @@ from pandas import read_csv, read_excel, read_json
 import os.path
 from file_validator.reader.messages import ReaderMessages as Messages, ReaderPrefixes as Prefixes
 from file_validator.logger import Logger
-from file_validator.helper.reader_utils import read_json as read_json_as_dict
+from file_validator.helper.utils import read_json as read_json_as_dict
 
 logger = Logger()
 
@@ -80,6 +80,7 @@ class FileReaderMixin:
 
     def read(self, *args, **kwargs):
         as_dict = kwargs.pop('as_dict', None)
+        is_config = kwargs.pop('is_config', None)
         has_read = True
         result = None
         file_path = args[0]
@@ -89,6 +90,9 @@ class FileReaderMixin:
         self.set_func_mapping()
 
         try:
+            if is_config and file_type == JSON:
+                raise Exception("Don't use pandas to read json config")
+
             df = self._read_file(file_path, file_type, **kwargs)
             result = df.to_dict() if as_dict else df
         except Exception as e:
