@@ -1,6 +1,6 @@
 from file_validator.validator.rules import AttributeValidation
 from file_validator.validator.validator import Validator
-from tests.examples.sample_1.messages import ValidatorMessages
+from examples import ValidatorMessages
 
 
 class CustomRule(AttributeValidation):

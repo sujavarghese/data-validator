@@ -1,5 +1,5 @@
 from file_validator.schema.schema import FeatureSchema
-from tests.examples.sample_1.validator import CustomRule
+from examples.ktas_csv_contacts_list.validator import CustomRule
 
 
 class ContactsSchema(FeatureSchema):

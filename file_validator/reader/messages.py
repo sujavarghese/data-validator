@@ -1,9 +1,12 @@
+import re
+
+
 class Base(object):
     def all(self):
-        return [name for name, value in vars(self).items() if not name.startswith('_')]
+        return [self.get(name) for name in dir(self) if re.match(r'([A-Z])+([_])+', name) and not name.startswith('_')]
 
     def get(self, key):
-        getattr(self, key, None)
+        return getattr(self, key, None)
 
 
 class Prefixes(Base):
@@ -25,8 +28,8 @@ class ReaderMessages(Messages):
     FILE_EXISTS_VALIDATION_PASSED = ReaderPrefixes.FILE_EXISTS_PREFIX + Messages.PASSED + ' for {}'
     FILE_EXISTS_VALIDATION_FAILED = ReaderPrefixes.FILE_EXISTS_PREFIX + Messages.FAILED + ' for {}'
 
-    FILE_EXTN_VALIDATION_PASSED = ReaderPrefixes.FILE_EXTENSION_CHECK_PREFIX + Messages.PASSED + 'for extension {} for file {}'
-    FILE_EXTN_VALIDATION_FAILED = ReaderPrefixes.FILE_EXTENSION_CHECK_PREFIX + Messages.FAILED + 'for extension {} for file {}'
+    FILE_EXTN_VALIDATION_PASSED = ReaderPrefixes.FILE_EXTENSION_CHECK_PREFIX + Messages.PASSED + ' for extension {} for file {}'
+    FILE_EXTN_VALIDATION_FAILED = ReaderPrefixes.FILE_EXTENSION_CHECK_PREFIX + Messages.FAILED + ' for extension {} for file {}'
 
     FILE_READER_VALIDATION_PASSED = ReaderPrefixes.FILE_READER_PREFIX + Messages.PASSED + ' for {}'
     FILE_READER_VALIDATION_FAILED = ReaderPrefixes.FILE_READER_PREFIX + Messages.FAILED + ' for {} with error: {}'

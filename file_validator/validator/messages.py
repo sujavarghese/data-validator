@@ -19,6 +19,7 @@ class ValidatorPrefixes(Prefixes):
     FILE_NAME_PREFIX = "Verify File Name: "
     FILE_EXTN_PREFIX = "Verify File Extension: "
     HEADER_VALIDATOR_PREFIX = "Verify field names: "
+    VERIFY_DUPLICATES_PREFIX = "Verify duplicates: "
 
 
 class ValidatorMessages(Messages):
@@ -34,3 +35,6 @@ class ValidatorMessages(Messages):
         ' No file validation schema specified. Passing through...'
     HEADER_VALIDATION_FAILED_WITH_MISSING_COLUMN = ValidatorPrefixes.HEADER_VALIDATOR_PREFIX + Messages.FAILED + \
         ' Missing columns are {}'
+
+    # Attribute Validation
+    DUPLICATE_VALIDATION_FAILED = ValidatorPrefixes.VERIFY_DUPLICATES_PREFIX + Messages.FAILED + " for {}"

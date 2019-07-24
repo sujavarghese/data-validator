@@ -115,7 +115,7 @@ class Report(Base):
     def prepare_row(self, df, rule, rule_id, category, typ, sub_category, columns, failed_record=None, **kwargs):
         unique_id = kwargs.get("file_path", 'FILE') if rule.is_file_rule else clean_value(failed_record[rule.unique_key])
         attr_value = "N/A" if rule.is_file_rule else clean_value(failed_record[rule.attribute])
-        message = rule.fail_message() if rule.is_file_rule else rule.fail_message(failed_record, **kwargs)
+        message = rule.fail_message(**kwargs) if rule.is_file_rule else rule.fail_message(failed_record, **kwargs)
 
         values = {
             "Rule ID": rule_id,
@@ -134,7 +134,7 @@ class Report(Base):
 
     def length_check(self, c_list, v_list):
         if len(c_list) != len(v_list):
-            raise Exception("Columns and rows have different number of items. "
+            raise Exception("Report columns and its values have different number of items. "
                             "Please confirm mapping again.")
 
     def validation_result(self, schema, **kwargs):

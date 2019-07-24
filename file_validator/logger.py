@@ -29,12 +29,19 @@ class LogRecordFactory(object):
     def get_records_by(self, name):
         self.get_records().get(name, [])
 
-    def serialize(self):
-        return [
+    def serialize(self, clear=False):
+        logs = [
             (name, str(log))
             for name, logs in self.get_records().items()
             for log in logs
         ]
+        if clear:
+            self._clear()
+
+        return logs
+
+    def _clear(self):
+        self._records = defaultdict(list)
 
 
 class LogRecord(object):

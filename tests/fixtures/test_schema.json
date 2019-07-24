@@ -1,0 +1,15 @@
+{
+  "fields": [
+    "test_column_1"
+  ],
+  "unique": ["test_column_1"],
+  "validations": {
+    "file_name": {
+      "tags": ["File Structure", "Naming"],
+      "fields": ["FILE"],
+      "constraint": ["tbl_account.csv"],
+      "pre-validation": [],
+      "message": "{} doesn't follow naming format."
+    }
+  }
+}

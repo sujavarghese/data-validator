@@ -1,6 +1,6 @@
 from file_validator.validator.rules import AttributeValidation
 from file_validator.validator.validator import Validator
-from tests.examples.ktas_csv_contacts_list.messages import ValidatorMessages, MessageCodes
+from examples import ValidatorMessages, MessageCodes
 from file_validator.messages import MessageMapping
 
 

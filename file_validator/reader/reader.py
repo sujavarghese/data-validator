@@ -45,6 +45,9 @@ class FileExtensionValidatorMixin:
 
     def extn_valid(self, file_path, file_type):
         extn = self.extensions.get(file_type)
+        if not extn:
+            return False
+
         return extn in file_path
 
     def check_extn_valid(self, *args, **kwargs):
@@ -78,13 +81,9 @@ class FileReaderMixin:
             XLSX: [read_excel, {}],
         }
 
-    def read(self, *args, **kwargs):
-        as_dict = kwargs.pop('as_dict', None)
-        is_config = kwargs.pop('is_config', None)
+    def read(self, file_path, file_type, as_dict=False, is_config=False, *args, **kwargs):
         has_read = True
         result = None
-        file_path = args[0]
-        file_type = args[1]
         msg = Messages.FILE_READER_VALIDATION_PASSED.format(file_path)
 
         self.set_func_mapping()
