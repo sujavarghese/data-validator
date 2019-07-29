@@ -22,9 +22,7 @@ class FileExistsMixin:
     def file_exists(file_path):
         return os.path.isfile(file_path)
 
-    def check_file_exists(self, *args, **kwargs):
-        file_path = args[0]
-
+    def check_file_exists(self, file_path, **kwargs):
         verified = self.file_exists(file_path)
 
         msg = Messages.FILE_EXISTS_VALIDATION_PASSED.format(file_path)
@@ -50,9 +48,9 @@ class FileExtensionValidatorMixin:
 
         return extn in file_path
 
-    def check_extn_valid(self, *args, **kwargs):
-        file_path = args[0]
-        file_type = args[1]
+    def check_extn_valid(self, file_path, file_type=None):
+        if not file_type:
+            file_type = self.get_extn()
 
         verified = self.extn_valid(file_path, file_type)
 
@@ -81,7 +79,7 @@ class FileReaderMixin:
             XLSX: [read_excel, {}],
         }
 
-    def read(self, file_path, file_type, as_dict=False, is_config=False, *args, **kwargs):
+    def read(self, file_path, file_type=None, as_dict=False, is_config=False, *args, **kwargs):
         has_read = True
         result = None
         msg = Messages.FILE_READER_VALIDATION_PASSED.format(file_path)
@@ -97,19 +95,21 @@ class FileReaderMixin:
         except Exception as e:
             traceback.print_exc()
 
-            result_dict = read_json_as_dict(file_path)
-            result = result_dict if as_dict else None
+            if file_type == JSON:
+                result_dict = read_json_as_dict(file_path)
+                result = result_dict if as_dict else None
 
             if not result or result.get('invalid'):
                 has_read = False
                 msg = Messages.FILE_READER_VALIDATION_FAILED.format(file_path, e)
+                result = {'invalid': True, 'message': e.args}
         finally:
             logger.record(name=file_path, msg=msg, status=has_read)
 
             return has_read, logger, result
 
     def _read_file(self, file_path, file_type, **kwargs):
-        options = self.func_map.get(file_type)
+        options = self.func_map.get(file_type or self.get_extn(), {})
         kwargs.update(options[1])
 
         func = options[0]
@@ -117,47 +117,38 @@ class FileReaderMixin:
 
 
 class FileReader(FileExistsMixin, FileExtensionValidatorMixin, FileReaderMixin):
+    extn = None
+
     def __init__(self):
         pass
 
-    def validate_and_read(self, *args, **kwargs):
-        file_exists = self.check_file_exists(*args, **kwargs)
+    def get_extn(self):
+        return self.extn
 
-        if not file_exists:
-            return file_exists, logger, None
-
-        return self.read(*args, **kwargs)
-
-
-class CSVFileReader(FileReader):
-    def validate_and_read(self, file_path, file_extn, **kwargs):
-        kwargs.pop('check_extn', False)
-        valid_extn = self.check_extn_valid(file_path, CSV)
-
-        if not valid_extn:
-            return valid_extn, logger, None
-
-        return super(CSVFileReader, self).validate_and_read(file_path, file_extn, **kwargs)
-
-
-class PSVFileReader(FileReader):
-    def validate_and_read(self, file_path, file_extn, **kwargs):
-        kwargs.pop('check_extn', False)
-        valid_extn = self.check_extn_valid(file_path, PSV)
-
-        if not valid_extn:
-            return valid_extn, logger, None
-
-        return super(PSVFileReader, self).validate_and_read(file_path, file_extn, **kwargs)
-
-
-class JSONFileReader(FileReader):
-    def validate_and_read(self, file_path, file_extn, **kwargs):
+    def validate_and_read(self, file_path, file_extn=None, *args, **kwargs):
         should_check_extn = kwargs.pop('check_extn', False)
+
         if should_check_extn:
-            valid_extn = self.check_extn_valid(file_path, JSON)
+            valid_extn = self.check_extn_valid(file_path, file_extn)
 
             if not valid_extn:
                 return valid_extn, logger, None
 
-        return super(JSONFileReader, self).validate_and_read(file_path, file_extn, **kwargs)
+        file_exists = self.check_file_exists(file_path, **kwargs)
+
+        if not file_exists:
+            return file_exists, logger, None
+
+        return self.read(file_path, file_extn, *args, **kwargs)
+
+
+class CSVFileReader(FileReader):
+    extn = CSV
+
+
+class PSVFileReader(FileReader):
+    extn = PSV
+
+
+class JSONFileReader(FileReader):
+    extn = JSON
