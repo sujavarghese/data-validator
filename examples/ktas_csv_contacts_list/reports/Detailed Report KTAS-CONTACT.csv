@@ -1,5 +1,0 @@
-Rule ID,Category,Sub Category,Type,Unique ID,Attribute,Value,Fail Message
-CDP_AT_013,Attribute,Integer,KTAS-CONTACT,A1075A2ZT ,CUSTOMER_ID_,A1075A2ZT ,'A1075A2ZT ' is not integer value
-CDP_AT_013,Attribute,Integer,KTAS-CONTACT,A10131363 ,CUSTOMER_ID_,A10131363 ,'A10131363 ' is not integer value
-CDP_AT_011,Attribute,Email,KTAS-CONTACT,990533077 ,EMAIL_ADDRESS_,serge.demezgmail.com                                       ,'serge.demezgmail.com                                       ' is not valid email.
-CDP_AT_006,Attribute,Length,KTAS-CONTACT,990533077 ,PHONE_NUMBER,+61404898724     ,"PHONE_NUMBER can contain value between [0, 11] char long. +61404898724      is does not follow this rule"
