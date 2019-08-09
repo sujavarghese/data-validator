@@ -1,5 +1,7 @@
 Simple library that validates the file and its contents.
 
+Technologies used are Python3, pandas, numpy.
+
 Please note, one should keep a master Non-Conformance Rule sheet for each implementation. This document must be updated accordingly when code changes are applied.
 
 During integration, follow directory structure as recommended. Refer tests/example directory to see framework integration.
